@@ -172,3 +172,8 @@ float calculateStdDev(int values[], int size, float mean) {
 void waitAfterMove() {
   delay(1000); // 1 seconds
 }
+
+void checkDistance(){
+  
+  return distance_measure
+}
