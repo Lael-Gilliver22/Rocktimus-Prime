@@ -1,4 +1,4 @@
-
+#include "Seeed_vl53l0x.h"
 #include <Servo.h> // include servo library
 
 Servo servoLeft; // Declare left and right servos
@@ -34,11 +34,30 @@ void turn_left();
 void turn_right();
 void waitAfterMove();
 
+
+// Distance sensor
+Seeed_vl53l0x VL53L0X;
+const int stopDist = 40;
+
 void setup() {
   servoLeft.attach(13);
   servoRight.attach(12);
 
-  Serial.begin(9600);
+  VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+    Serial.begin(115200);
+    delay(50); // See if you can remove, attempt to stop vl53 measure fail from power instability
+    Status = VL53L0X.VL53L0X_common_init();
+    if (VL53L0X_ERROR_NONE != Status) {
+        Serial.println("start vl53l0x mesurement failed!");
+        VL53L0X.print_pal_error(Status);
+        while (1);
+    }
+    VL53L0X.VL53L0X_high_accuracy_ranging_init();
+    if (VL53L0X_ERROR_NONE != Status) {
+        Serial.println("start vl53l0x mesurement failed!");
+        VL53L0X.print_pal_error(Status);
+        while (1);
+    }
 
   // Initial filling of lastValues arrays
   for (i = 0; i < 25; i++) {
@@ -89,33 +108,37 @@ void loop() {
   // Outlier detection using Z-score for both sensors
   float leftZScore = (leftOutputValue - leftAverageValue) / calculateStdDev(leftLastValues, 25, leftAverageValue);
   float rightZScore = (rightOutputValue - rightAverageValue) / calculateStdDev(rightLastValues, 25, rightAverageValue);
+  if checkDistance <= stopDist{
+    Serial.print("Not moving, within stopping distance")
+  }
+  else{
 
-  // Check if the Z-scores are greater than the threshold
-  if (abs(leftZScore) > threshold && abs(leftZScore) > abs(rightZScore)) {
-    Serial.print("Left Sensor Outlier detected! Z-Score: ");
-    Serial.println(leftZScore);
-    turn_left();
-    waitAfterMove(); // Wait after turning left
-    lastOutlierTime = millis(); // Update the last outlier detection time
-  }
-  else if (abs(rightZScore) > threshold) {
-    Serial.print("Right Sensor Outlier detected! Z-Score: ");
-    Serial.println(rightZScore);
-    turn_right();
-    waitAfterMove(); // Wait after turning right
-    lastOutlierTime = millis(); // Update the last outlier detection time
-  }
-  else {
-    // Check if it's been 5 seconds since the last outlier detection
-    if (millis() - lastOutlierTime > outlierCheckInterval) {
-      move_forward(); // Move forward if no outliers detected for 5 seconds
-      waitAfterMove(); // Wait after moving forward
-      lastOutlierTime = millis(); // Reset the timer
+    // Check if the Z-scores are greater than the threshold
+    if (abs(leftZScore) > threshold && abs(leftZScore) > abs(rightZScore)) {
+      Serial.print("Left Sensor Outlier detected! Z-Score: ");
+      Serial.println(leftZScore);
+      turn_left();
+      waitAfterMove(); // Wait after turning left
+      lastOutlierTime = millis(); // Update the last outlier detection time
+    }
+    else if (abs(rightZScore) > threshold) {
+      Serial.print("Right Sensor Outlier detected! Z-Score: ");
+      Serial.println(rightZScore);
+      turn_right();
+      waitAfterMove(); // Wait after turning right
+      lastOutlierTime = millis(); // Update the last outlier detection time
+    }
+    else {
+      // Check if it's been 5 seconds since the last outlier detection
+      if (millis() - lastOutlierTime > outlierCheckInterval) {
+        move_forward(); // Move forward if no outliers detected for 5 seconds
+        waitAfterMove(); // Wait after moving forward
+        lastOutlierTime = millis(); // Reset the timer
+      }
     }
   }
-
   // Wait before the next loop
-  delay(50); // Adjust as needed
+  delay(50); // Adjust as needed TEST SETTING TO 0
 }
 
 // Function to calculate the average of an array
@@ -173,7 +196,18 @@ void waitAfterMove() {
   delay(1000); // 1 seconds
 }
 
+// Call each time the distance needs checking
 void checkDistance(){
-  
-  return distance_measure
+  VL53L0X_RangingMeasurementData_t RangingMeasurementData;
+    VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+    memset(&RangingMeasurementData, 0, sizeof(VL53L0X_RangingMeasurementData_t));
+    // Get measurement Info
+    Status = VL53L0X.PerformSingleRangingMeasurement(&RangingMeasurementData);
+    // What to do with measurement info
+    if (VL53L0X_ERROR_NONE == Status) {
+      return RangingMeasurementData.RangeMilliMeter 
+    } else {
+        Serial.print("mesurement failed !! Status code =");
+        Serial.println(Status);
+    }
 }
