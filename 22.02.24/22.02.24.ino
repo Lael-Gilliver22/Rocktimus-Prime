@@ -2,12 +2,6 @@
 #include <Servo.h> // include servo library
 
 
-#ifdef ARDUINO_SAMD_VARIANT_COMPLIANCE
-    #define SERIAL SerialUSB
-#else
-    #define SERIAL Serial
-#endif
-
 Servo servoLeft; // Declare left and right servos
 Servo servoRight;
 
@@ -52,17 +46,17 @@ void setup() {
   servoRight.attach(12);
 
   VL53L0X_Error Status = VL53L0X_ERROR_NONE;
-    SERIAL.begin(115200);
+    Serial.begin(115200);
     delay(50); // See if you can remove, attempt to stop vl53 measure fail from power instability
     Status = VL53L0X.VL53L0X_common_init();
     if (VL53L0X_ERROR_NONE != Status) {
-        SERIAL.println("start vl53l0x mesurement failed! 1");
+        Serial.println("start vl53l0x mesurement failed! 1");
         VL53L0X.print_pal_error(Status);
         while (1);
     }
     VL53L0X.VL53L0X_high_accuracy_ranging_init();
     if (VL53L0X_ERROR_NONE != Status) {
-        SERIAL.println("start vl53l0x mesurement failed! 2");
+        Serial.println("start vl53l0x mesurement failed! 2");
         VL53L0X.print_pal_error(Status);
         while (1);
     }
@@ -85,7 +79,7 @@ void setup() {
 }
 
 void loop() {
-  SERIAL.println("LOOP");
+  Serial.println("LOOP");
   
   // Sensor readings and output calculations for both sensors
   leftSensorValue = analogRead(analogLeftPin);
@@ -99,14 +93,14 @@ void loop() {
   rightAverageValue = findAverage(rightLastValues);
   
   // Print sensor and average values
-  SERIAL.print("Left Sensor: ");
-  SERIAL.print(leftOutputValue);
-  SERIAL.print(", Left Average Value: ");
-  SERIAL.print(leftAverageValue);
-  SERIAL.print(" | Right Sensor: ");
-  SERIAL.print(rightOutputValue);
-  SERIAL.print(", Right Average Value: ");
-  SERIAL.println(rightAverageValue);
+  Serial.print("Left Sensor: ");
+  Serial.print(leftOutputValue);
+  Serial.print(", Left Average Value: ");
+  Serial.print(leftAverageValue);
+  Serial.print(" | Right Sensor: ");
+  Serial.print(rightOutputValue);
+  Serial.print(", Right Average Value: ");
+  Serial.println(rightAverageValue);
   
   // Store the current outputValues in lastValues arrays
   leftLastValues[count] = leftOutputValue;
@@ -122,22 +116,22 @@ void loop() {
   distance = checkDistance();
 
   if (distance <= stopDist){
-    SERIAL.print("Not moving, within stopping distance");
+    Serial.print("Not moving, within stopping distance");
   }
 
   else{
     // Check if the Z-scores are greater than the threshold
     
     if (abs(leftZScore) > threshold && abs(leftZScore) > abs(rightZScore)) {
-      //SERIAL.print("Left Sensor Outlier detected! Z-Score: ");
-      //SERIAL.println(leftZScore);
+      //Serial.print("Left Sensor Outlier detected! Z-Score: ");
+      //Serial.println(leftZScore);
       turn_left();
       waitAfterMove(); // Wait after turning left
       lastOutlierTime = millis(); // Update the last outlier detection time
     }
     else if (abs(rightZScore) > threshold) { 
-      //SERIAL.print("Right Sensor Outlier detected! Z-Score: ");
-      //SERIAL.println(rightZScore);
+      //Serial.print("Right Sensor Outlier detected! Z-Score: ");
+      //Serial.println(rightZScore);
       turn_right();
       waitAfterMove(); // Wait after turning right
       lastOutlierTime = millis(); // Update the last outlier detection time
@@ -175,7 +169,7 @@ void move_forward() {
   servoLeft.writeMicroseconds(1700);
   servoRight.writeMicroseconds(1300);
   delay(1000);
-  //SERIAL.println("forwards");
+  //Serial.println("forwards");
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
   delay(1000);
@@ -185,7 +179,7 @@ void turn_left() {
   servoLeft.writeMicroseconds(1600);
   servoRight.writeMicroseconds(1600);
   delay(250);
-  //SERIAL.println("left");
+  //Serial.println("left");
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
   delay(1000);
@@ -195,7 +189,7 @@ void turn_right() {
   servoLeft.writeMicroseconds(1400);
   servoRight.writeMicroseconds(1400);
   delay(250);
-  //SERIAL.println("right");
+  //Serial.println("right");
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
   delay(1000);
@@ -226,7 +220,7 @@ int checkDistance(){
   if (VL53L0X_ERROR_NONE == Status) {
     return RangingMeasurementData.RangeMilliMeter;
   } else {
-      //SERIAL.print("mesurement failed !! Status code =");
-      //SERIAL.println(Status);
+      //Serial.print("mesurement failed !! Status code =");
+      //Serial.println(Status);
   }
 }
