@@ -1,0 +1,70 @@
+const int analogInPin = A0;
+
+int speedMultiplier = 1;
+int sensorValue = 0;
+int outputValue = 0;
+
+int lastValues[25];
+int lastUsedValues[25];
+int count = 0;
+int i = 0;
+int averageValue = 0;
+int verifyAvergeValue = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  for (i=0; i<25; i++){
+    sensorValue = analogRead(analogInPin);
+    outputValue = map(sensorValue, 0, 1023, 0, 255);
+    lastValues[i] = outputValue;
+    lastUsedValues[i] = outputValue;
+  }
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  sensorValue = analogRead(analogInPin);
+  outputValue = map(sensorValue, 0, 1023, 0, 255);
+  averageValue = findAverage(lastUsedValues);
+  verifyAvergeValue = findAverage(lastValues);
+
+if(averageValue - verifyAvergeValue > 5 || averageValue - verifyAvergeValue < -5){
+    reset();
+  }
+
+  Serial.print("Sensor:");
+  Serial.print(outputValue);
+  Serial.print(" , averageValue:");
+  Serial.println(averageValue);
+
+  if(outputValue > averageValue - 2 && outputValue < averageValue + 2){
+    lastUsedValues[count] = outputValue;
+  }
+
+  lastValues[count] = outputValue;
+
+  count = count + 1;
+  if(count == 25){
+    count = count % 25;
+  }
+}
+
+int findAverage(int arr[25]){
+  int result = 0;
+  int sum = 0;
+  for (i=0;i<25;i++){
+    sum = arr[i];
+  }
+  result = sum;
+  return result;
+}
+
+void reset(){
+  for (i=0; i<25; i++){
+    sensorValue = analogRead(analogInPin);
+    outputValue = map(sensorValue, 0, 1023, 0, 255);
+    lastValues[i] = outputValue;
+    lastUsedValues[i] = outputValue;
+  }
+}
