@@ -80,9 +80,16 @@ void lightScan() {
     }
   }
   //turn back until reaching lowest value
-
+  facingLight = false;
   servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
   servoRight.writeMicroseconds(1500 + servoRotateSpeed);
+  while (!facingLight) {
+    currentRed = pulseIn(sensorOut, LOW);
+    if (currentRed <= lowestRed){
+      facingLight = true;
+    }
+  }
+
   delay(500);
   servoLeft.writeMicroseconds(1500 + 3*servoRotateSpeed);
   servoRight.writeMicroseconds(1500 - 3*servoRotateSpeed);
