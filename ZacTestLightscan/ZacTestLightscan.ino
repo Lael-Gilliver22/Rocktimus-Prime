@@ -46,7 +46,6 @@ void lightScan() {
   
   servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
   servoRight.writeMicroseconds(1500 - servoRotateSpeed);
-  
   while (!facingLight) {
     currentRed = pulseIn(sensorOut, LOW);
     Serial.print("currentRed");
@@ -83,6 +82,41 @@ void lightScan() {
   facingLight = false;
   servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
   servoRight.writeMicroseconds(1500 + servoRotateSpeed);
+  while (!facingLight) {
+    currentRed = pulseIn(sensorOut, LOW);
+    Serial.print("currentRed");
+    Serial.print(currentRed);
+    Serial.print("LowestRed");
+    Serial.print(lowestRed);
+    Serial.print("countLow");
+    Serial.print(countlow);
+    Serial.print("countHigh");
+    Serial.println(counthigh);
+    Serial.println("");
+    if (currentRed <= lowestRed){
+      counthigh = 0;
+      if (countlow < 5){
+        countlow += 1;
+      }
+      else{
+        countlow = 0;
+        lowestRed = currentRed;
+      }
+    }
+    else if(currentRed > lowestRed){ //-1 tolerance
+      countlow = 0;
+      if (counthigh < 5){
+        counthigh += 1;
+      }
+      else{
+        counthigh = 0;
+        facingLight = true;
+      }
+    }
+  }
+  servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
+  servoRight.writeMicroseconds(1500 - servoRotateSpeed);
+  facingLight = false;
   while (!facingLight) {
     currentRed = pulseIn(sensorOut, LOW);
     if (currentRed <= lowestRed){
