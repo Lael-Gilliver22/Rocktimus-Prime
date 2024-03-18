@@ -13,6 +13,7 @@ int redFrequency = 0;
 
 int currentRed = pulseIn(sensorOut, LOW);
 int lastRed = currentRed;
+int initialRed = currentRed;
 int lowestRed = 9999;
 int countlow = 0;
 int counthigh = 0;
@@ -51,15 +52,23 @@ void lightScan() {
   servoRight.writeMicroseconds(1500 - servoRotateSpeed);
   
   loopUntilRedIncrease("left");
+  Serial.println("LEFT DONE");
   //turn back until reaching lowest value
   loopUntilRedIncrease("right");
-
-  servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
+  Serial.println("RIGHT DONE");
+  //small move forward to compensate for bot backing up during rotation
+  servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
   servoRight.writeMicroseconds(1500 - servoRotateSpeed);
+  delay (500);
+
+
+  servoLeft.writeMicroseconds(1500 - servoRotateSpeed/2);
+  servoRight.writeMicroseconds(1500 - servoRotateSpeed/2);
   facingLight = false;
   while (!facingLight) {
     currentRed = pulseIn(sensorOut, LOW);
-    if (currentRed <= lowestRed){
+    printReadings();
+    if (currentRed <= lowestRed + 5){ //5 tolerance to prevent overshoots
       facingLight = true;
     }
   }
@@ -79,6 +88,8 @@ void distanceScan(){
 
 void loopUntilRedIncrease(String direction){
   facingLight = false;
+  currentRed = pulseIn(sensorOut, LOW);
+  initialRed = currentRed;
   if (direction == "left"){
     servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
     servoRight.writeMicroseconds(1500 - servoRotateSpeed);
@@ -89,15 +100,7 @@ void loopUntilRedIncrease(String direction){
   }
   while (!facingLight) {
     currentRed = pulseIn(sensorOut, LOW);
-    Serial.print("currentRed");
-    Serial.print(currentRed);
-    Serial.print("LowestRed");
-    Serial.print(lowestRed);
-    Serial.print("countLow");
-    Serial.print(countlow);
-    Serial.print("countHigh");
-    Serial.println(counthigh);
-    Serial.println("");
+    printReadings();
     if (currentRed <= lowestRed){
       counthigh = 0;
       if (countlow < 5){
@@ -108,22 +111,38 @@ void loopUntilRedIncrease(String direction){
         lowestRed = currentRed;
       }
     }
-    else if(currentRed > lowestRed){ 
+    else if(currentRed > lastRed){ 
       countlow = 0;
       if (counthigh < 5){
         counthigh += 1;
       }
       else{
         counthigh = 0;
-        if (currentRed >= lowestRed+10){
+        if (currentRed >= lowestRed+(0.2*lowestRed)){
           Serial.println("Final Red");
           Serial.print(currentRed);
           facingLight = true;
         }
       }
     }
-    if (currentRed > 600){//going in wrong direction, will not find red light. Best to spin 90 degrees, or to break out the loop
+    if ((currentRed > (initialRed * 1.2)) && (direction == "left")){//going in wrong direction, will not find red light. Best to spin 90 degrees, or to break out the loop. NEEDS IMPROVING
       Serial.println("Going too far away!");
+      //assume this will only happen on the first left turn, so exit the loop
+      facingLight = true;
     }
+    lastRed = currentRed;
   }
+}
+
+
+void printReadings(){
+  Serial.print("currentRed");
+  Serial.print(currentRed);
+  Serial.print(" LowestRed");
+  Serial.print(lowestRed);
+  Serial.print(" countLow");
+  Serial.print(countlow);
+  Serial.print(" countHigh");
+  Serial.println(counthigh);
+  Serial.println("");
 }
