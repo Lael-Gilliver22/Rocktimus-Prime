@@ -2,7 +2,7 @@
 
 Servo servoLeft;
 Servo servoRight;
-int servoRotateSpeed = 25;
+int servoRotateSpeed = 30;
 #define S0 3
 #define S1 4
 #define S2 5
@@ -47,10 +47,6 @@ void setup() {
 void loop() {}
 
 void lightScan() {
-  lowestRed = 9999;
-  countlow = 0;
-  counthigh = 0;
-  //spinscan();
   
   servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
   servoRight.writeMicroseconds(1500 - servoRotateSpeed);
@@ -61,10 +57,11 @@ void lightScan() {
   loopUntilRedIncrease("right");
   Serial.println("RIGHT DONE");
   //small move forward to compensate for bot backing up during rotation
+  /*
   servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
   servoRight.writeMicroseconds(1500 - servoRotateSpeed);
   delay (500);
-
+  */
 
   servoLeft.writeMicroseconds(1500 - servoRotateSpeed/2);
   servoRight.writeMicroseconds(1500 - servoRotateSpeed/2);
@@ -76,7 +73,6 @@ void lightScan() {
       facingLight = true;
     }
   }
-
 
   delay(500);
   servoLeft.writeMicroseconds(1500 + 3*servoRotateSpeed);
@@ -123,14 +119,14 @@ void loopUntilRedIncrease(String direction){
       }
       else{
         counthigh = 0;
-        if (currentRed >= lowestRed+(0.2*lowestRed)){ //deliberately overshoot to scan values further
+        if (currentRed >= lowestRed+(0.2*lowestRed)){
           Serial.println("Final Red");
           Serial.print(currentRed);
-          facingLight = true; // actually will be overshot
+          facingLight = true;
         }
       }
     }
-    if ((currentRed > (initialRed + 5)) && (direction == "left")){//going in wrong direction, will not find red light. Best to spin 90 degrees, or to break out the loop. NEEDS IMPROVING
+    if ((currentRed > (initialRed * 1.2)) && (direction == "left")){//going in wrong direction, will not find red light. Best to spin 90 degrees, or to break out the loop. NEEDS IMPROVING
       Serial.println("Going too far away!");
       //assume this will only happen on the first left turn, so exit the loop
       facingLight = true;
@@ -139,38 +135,6 @@ void loopUntilRedIncrease(String direction){
   }
 }
 
-void spinscan(){
-  lowestRed = 9999;
-  countlow = 0;
-  servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
-  servoRight.writeMicroseconds(1500 - servoRotateSpeed);
-  unsigned long startTime = millis(); // Get the current time
-
-  while (millis() - startTime < 8000) {
-
-      // This will execute for 10 seconds
-  digitalWrite(S2,LOW);
-  digitalWrite(S3,LOW);
-  currentRed = pulseIn(sensorOut, LOW);
-    printReadings();
-    if (currentRed <= lowestRed){
-      if (countlow < 5){ //must be lower 3 times in a row to eliminate random jumps in value
-        countlow += 1;
-      }
-      else{
-        countlow = 0;
-        lowestRed = currentRed;
-        Serial.println("NEW LOWEST RED!!!!!");
-      }
-    }
-  }
-  Serial.println("Turning to find red light");
-  while (currentRed != lowestRed) {
-    currentRed = pulseIn(sensorOut, LOW);
-  }
-  servoLeft.writeMicroseconds(1500);
-  servoRight.writeMicroseconds(1500);
-}
 
 void printReadings(){
   Serial.print("currentRed");
