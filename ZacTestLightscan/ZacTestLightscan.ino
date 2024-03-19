@@ -47,7 +47,7 @@ void setup() {
 void loop() {}
 
 void lightScan() {
-  
+  /*
   servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
   servoRight.writeMicroseconds(1500 - servoRotateSpeed);
   
@@ -56,13 +56,14 @@ void lightScan() {
   //turn back until reaching lowest value
   loopUntilRedIncrease("right");
   Serial.println("RIGHT DONE");
+  */
   //small move forward to compensate for bot backing up during rotation
   /*
   servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
   servoRight.writeMicroseconds(1500 - servoRotateSpeed);
   delay (500);
   */
-
+  spinscan();
   servoLeft.writeMicroseconds(1500 - servoRotateSpeed/2);
   servoRight.writeMicroseconds(1500 - servoRotateSpeed/2);
   facingLight = false;
@@ -135,6 +136,39 @@ void loopUntilRedIncrease(String direction){
   }
 }
 
+void spinscan(){
+  lowestRed = 9999;
+  countlow = 0;
+  servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
+  servoRight.writeMicroseconds(1500 + servoRotateSpeed);
+  unsigned long startTime = millis(); // Get the current time
+
+  while (millis() - startTime < 8000) {
+
+      // This will execute for 10 seconds
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,LOW);
+  currentRed = pulseIn(sensorOut, LOW);
+    //printReadings();
+    if (currentRed <= lowestRed){
+      if (countlow < 5){ //must be lower 3 times in a row to eliminate random jumps in value
+        countlow += 1;
+      }
+      else{
+        countlow = 0;
+        lowestRed = currentRed;
+        Serial.println("NEW LOWEST RED!!!!!");
+        printReadings();
+      }
+    }
+  }
+  Serial.println("Turning to find red light");
+  while (currentRed != lowestRed) {
+    currentRed = pulseIn(sensorOut, LOW);
+  }
+  servoLeft.writeMicroseconds(1500);
+  servoRight.writeMicroseconds(1500);
+}
 
 void printReadings(){
   Serial.print("currentRed");
