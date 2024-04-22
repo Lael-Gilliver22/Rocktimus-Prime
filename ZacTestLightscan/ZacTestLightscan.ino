@@ -151,7 +151,7 @@ void spinscan(){
   digitalWrite(S3,LOW);
   currentRed = pulseIn(sensorOut, LOW);
     //printReadings();
-    if (currentRed <= lowestRed){
+    if (currentRed <= lowestRed){ //CHECK IF DISTANCE SENSOR IS REASONABLE TO STOP IT DETECTING THE SUN
       if (countlow < 5){ //must be lower 3 times in a row to eliminate random jumps in value
         countlow += 1;
       }
@@ -186,9 +186,24 @@ void printReadings(){
 void moveTowardsLight(){
   facingLight = true;
   lastRed = pulseIn(sensorOut, LOW);
+  counthigh = 0;
   while (facingLight){
     currentRed = pulseIn(sensorOut, LOW);
-    if currentRed > lastRed
-
+    if (currentRed > lastRed){
+      if (counthigh < 5){ //must be lower 3 times in a row to eliminate random jumps in value
+        counthigh += 1;
+      }
+      else{
+        //scan again
+        counthigh = 0;
+        spinscan();
+      //this means it is not going towards the light anymore!!!
+    }
+  }
+  else{
+    counthigh = 0;
   }
 }
+
+
+
