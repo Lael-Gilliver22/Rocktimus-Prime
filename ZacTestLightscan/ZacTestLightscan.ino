@@ -75,9 +75,10 @@ void lightScan() {
     }
   }
 
-  delay(500);
+  delay(500); //change the following to instead move until red starts increasing again (moving away from light)
   servoLeft.writeMicroseconds(1500 + 3*servoRotateSpeed);
   servoRight.writeMicroseconds(1500 - 3*servoRotateSpeed);
+  moveTowardsLight();
   delay(2000);
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
@@ -180,4 +181,14 @@ void printReadings(){
   Serial.print(" countHigh");
   Serial.println(counthigh);
   Serial.println("");
+}
+
+void moveTowardsLight(){
+  facingLight = true;
+  lastRed = pulseIn(sensorOut, LOW);
+  while (facingLight){
+    currentRed = pulseIn(sensorOut, LOW);
+    if currentRed > lastRed
+
+  }
 }
