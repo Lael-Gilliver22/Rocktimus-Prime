@@ -7,10 +7,10 @@ int servoRotateSpeed = 30;
 //--------------------------------------
 
 //Other
-const int soundSystem = 0;
-const int lightSystem = 1;
-const int stopSystem = 2;
-int activeSystem = 0; //0 is sound, 1 is light, 3 is finish
+const int activesoundSystem = 0;
+const int activelightSystem = 1;
+const int activestopSystem = 2;
+int activeSystem = activesoundSystem; //0 is sound, 1 is light, 3 is finish
 //--------------------------------------
 
 //LED
@@ -33,7 +33,14 @@ int currentDist = 0;
 //--------------------------------------
 
 //Sound sensors
+const int analogLeftPin = A0;   // Analog input pin for the left sensor
+const int analogRightPin = A1;  // Analog input pin for the right sensor
+const int analogBackPin = A2;   // Analog input pin for the back sensor
+const int soundTolerance = 5;
 
+int leftSensorValue = 0;
+int rightSensorValue = 0;
+int backSensorValue = 0;
 //--------------------------------------
 
 //Light sensor
@@ -91,17 +98,21 @@ void setup() {
   digitalWrite(greenPin,LOW);
   pinMode(yellowPin,OUTPUT);
   digitalWrite(yellowPin,LOW);
+  Serial.print("SETUP COMPLETE");
+  delay(2000);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  if (activeSystem == soundSystem){
+  if (activeSystem == activesoundSystem){
     LEDcontrol(0, 0, 1);
-    pass()
+    soundSystem();
+    
+    //SOUND SYSTEM CODE HERE
   }
-  else if (activeSystem == lightSystem){
+  else if (activeSystem == activelightSystem){
     LEDcontrol(0, 1, 0);
-    pass()
+    //LIGHT SYSTEM CODE HERE
   }
   else{
     LEDcontrol(1, 1, 1);
@@ -110,12 +121,41 @@ void loop() {
 }
 
 
-void soundSystem{
-  pass()
+void soundSystem(){
+  readSound();
+  Serial.print(50); // To freeze the lower limit
+  Serial.print(" ");
+  Serial.print(200); // To freeze the upper limit
+  Serial.print(" ");
+  
+  Serial.print(leftSensorValue);
+  Serial.print(",");
+  Serial.print(rightSensorValue);
+  Serial.print(",");
+  Serial.println(backSensorValue);
+  
+  delay(2);
+  if ((backSensorValue >= (leftSensorValue + soundTolerance)) && (backSensorValue >= (rightSensorValue + soundTolerance))){ // &&  is AND
+    Serial.println("ROTATE 180");
+  }
+  else if(rightSensorValue >= (leftSensorValue + soundTolerance)){
+    Serial.println("RIGHT TURN");
+    turn_right();
+  }
+  else if(leftSensorValue>= (rightSensorValue + soundTolerance)){
+    Serial.println("LEFT TURN");
+    turn_left();
+  }
+  else{
+    //Serial.println("FORWARD");
+    servoLeft.writeMicroseconds(1600);
+    servoRight.writeMicroseconds(1400);
+  }
+  //SOUND SYSTEM
 }
 
-void lightSystem{
-  pass()
+void lightSystem(){
+  //LIGHT SYSTEM
 }
 
 int readDistance() {
@@ -130,28 +170,24 @@ int readLight() {
   return (pulseIn(sensorOut, LOW));
 }
 
-int readSound(int soundSensor) { //take in sensor and return for that sensor, or program it to return 3 values (1 for each sensors) each time readSound is called?
-  int soundSensor = soundSensor
-  if (Soundsensor == 0){ //left
-    pass()
-  }
-  else if (Soundsensor == 1){ //right
-    pass()
-  }
-  else if (Soundsensor == 2){ //rear
-    pass()
-  }
-  else{
-    Serial.println("ONLY  LEFT, RIGHT, REAR sensors are valid inputs")
-  }
+int readSound() {
+  delay(2);
+  leftSensorValue = analogRead(analogLeftPin);
+  //leftSensorValue = map(leftSensorValue, 0, 1023, 0, 255);
+  delay(2);
+  rightSensorValue = analogRead(analogRightPin);
+  //rightSensorValue = map(rightSensorValue, 0, 1023, 0, 255);
+  delay(2);
+  backSensorValue = analogRead(analogBackPin);
+  //backSensorValue = map(backSensorValue, 0, 1023, 0, 255);
 }
 
 void stop(){
   //detach servos or set speed to 0 or what?
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
-  servoLeft.detach(13);
-  servoRight.detach(12);
+  servoLeft.detach();
+  servoRight.detach();
 }
 
 void reAttach(){
@@ -162,7 +198,7 @@ void reAttach(){
 void checkActivateLightSubsystem(){
   int distanceReading = readDistance();
   int lightReading = readLight();
-  if (distanceReading <= activateLightdistance){
+  if (distanceReading <= activateLightDistance){
     if(lightReading <= activateLightLightread){
       activeSystem = lightSystem;
     }
@@ -188,4 +224,25 @@ void LEDcontrol (bool redOn, bool greenOn, bool yellowOn){ //eg to turn all on, 
   else{
     digitalWrite(yellowPin, LOW);
   }
+}
+
+
+void turn_left() {
+  servoLeft.writeMicroseconds(1400);
+  servoRight.writeMicroseconds(1400);
+  delay(150);
+  Serial.println("left");
+  servoLeft.writeMicroseconds(1500);
+  servoRight.writeMicroseconds(1500);
+  delay(500);
+}
+
+void turn_right() {
+  servoLeft.writeMicroseconds(1600);
+  servoRight.writeMicroseconds(1600);
+  delay(150);
+  Serial.println("right");
+  servoLeft.writeMicroseconds(1500);
+  servoRight.writeMicroseconds(1500);
+  delay(500);
 }
