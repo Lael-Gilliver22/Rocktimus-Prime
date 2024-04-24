@@ -44,14 +44,14 @@ int backSensorValue = 0;
 //--------------------------------------
 
 //Light sensor
-#define S0 3
-#define S1 4
-#define S2 5
+#define S0 4
+#define S1 5
+#define S2 7
 #define S3 6
-#define sensorOut 2 //CHECK THIS IS WIRED CORRECT
+#define sensorOut 8 //CHECK THIS IS WIRED CORRECT
 const int tolerance = 0;
-const int activateLightLightread = 50; //Light reading must be below this and within activateLightDistance to activate the sound substem
-int redFrequency = 0;
+const int activateLightLightread = 4000; //Light reading must be below this and within activateLightDistance to activate the sound substem
+int redFrequency = 0; 
 int currentRed = pulseIn(sensorOut, LOW);
 int lastRed = currentRed;
 int initialRed = currentRed;
@@ -62,7 +62,7 @@ bool facingLight = false;
 //--------------------------------------
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   //Distance sensor setup
   Wire.begin();
   sensor.setTimeout(500);
@@ -79,6 +79,11 @@ void setup() {
   //Sound sensors setup
 
   //Light sensor setup
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+  pinMode(sensorOut, INPUT);
   digitalWrite(S0, HIGH);
   digitalWrite(S1, HIGH);
   digitalWrite(S2,LOW);
@@ -123,6 +128,7 @@ void loop() {
 
 void soundSystem(){
   readSound();
+  /*
   Serial.print(50); // To freeze the lower limit
   Serial.print(" ");
   Serial.print(200); // To freeze the upper limit
@@ -133,7 +139,7 @@ void soundSystem(){
   Serial.print(rightSensorValue);
   Serial.print(",");
   Serial.println(backSensorValue);
-  
+  */
   delay(2);
   if ((backSensorValue >= (leftSensorValue + soundTolerance)) && (backSensorValue >= (rightSensorValue + soundTolerance))){ // &&  is AND
     Serial.println("ROTATE 180");
@@ -151,7 +157,12 @@ void soundSystem(){
     servoLeft.writeMicroseconds(1600);
     servoRight.writeMicroseconds(1400);
   }
-  //SOUND SYSTEM
+  currentRed = readLight();
+  Serial.print("RED, ");
+  Serial.println(currentRed);
+  //checkActivateLightSubsystem()
+
+  //SOUND SYSTEM END
 }
 
 void lightSystem(){
@@ -167,7 +178,14 @@ int readDistance() {
 }
 
 int readLight() {
-  return (pulseIn(sensorOut, LOW));
+  long redVal = pulseIn(sensorOut, LOW);
+  if (redVal < 0) {
+    // Handle error or out-of-range situation
+    // For now, just return a large positive value
+    return 9999; // Or any other suitable value
+  } else {
+    return redVal;
+  }
 }
 
 int readSound() {
@@ -234,7 +252,7 @@ void turn_left() {
   Serial.println("left");
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
-  delay(500);
+  delay(150);
 }
 
 void turn_right() {
@@ -244,5 +262,5 @@ void turn_right() {
   Serial.println("right");
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
-  delay(500);
+  delay(150);
 }
