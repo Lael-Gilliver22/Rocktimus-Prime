@@ -7,10 +7,10 @@ int servoRotateSpeed = 30;
 #define S1 4
 #define S2 5
 #define S3 6
-#define sensorOut 2
+#define sensorOut 2 //CHECK THIS IS WIRED CORRECT
 int tolerance = 0;
 int redFrequency = 0;
-
+int reasonableDistance = 100; //Ignores light readings when distance sensor reads higher than this
 int currentRed = pulseIn(sensorOut, LOW);
 int lastRed = currentRed;
 int initialRed = currentRed;
@@ -31,14 +31,11 @@ void setup() {
   pinMode(S1, OUTPUT);
   pinMode(S2, OUTPUT);
   pinMode(S3, OUTPUT);
-  
   pinMode(sensorOut, INPUT);
-
-  //digitalWrite(S0, HIGH);
-  //digitalWrite(S1, HIGH);
   digitalWrite(S0, HIGH);
   digitalWrite(S1, HIGH);
-  
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,LOW);
   Serial.begin(9600);
 
   lightScan();
