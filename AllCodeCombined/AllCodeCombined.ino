@@ -117,6 +117,7 @@ void loop() {
   }
   else if (activeSystem == activelightSystem){
     LEDcontrol(0, 1, 0);
+    lightSystem();
     //LIGHT SYSTEM CODE HERE
   }
   else{
@@ -166,6 +167,7 @@ void soundSystem(){
 }
 
 void lightSystem(){
+  spinScan();
   //LIGHT SYSTEM
 }
 
@@ -257,3 +259,39 @@ void turn_right() {
   servoRight.writeMicroseconds(1500);
   delay(150);
 }
+
+
+void spinscan(){
+  lowestRed = 9999;
+  countlow = 0;
+  servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
+  servoRight.writeMicroseconds(1500 + servoRotateSpeed);
+  unsigned long startTime = millis(); // Get the current time
+
+  while (millis() - startTime < 8000) {
+
+      // This will execute for 10 seconds
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,LOW);
+  currentRed = pulseIn(sensorOut, LOW);
+    //printReadings();
+    if (currentRed <= lowestRed){ //CHECK IF DISTANCE SENSOR IS REASONABLE TO STOP IT DETECTING THE SUN
+      if (countlow < 5){ //must be lower 3 times in a row to eliminate random jumps in value
+        countlow += 1;
+      }
+      else{
+        countlow = 0;
+        lowestRed = currentRed;
+        Serial.println("NEW LOWEST RED!!!!!");
+        printReadings();
+      }
+    }
+  }
+  Serial.println("Turning to find red light");
+  while (currentRed != lowestRed) {
+    currentRed = pulseIn(sensorOut, LOW);
+  }
+  servoLeft.writeMicroseconds(1500);
+  servoRight.writeMicroseconds(1500);
+}
+
