@@ -178,14 +178,7 @@ int readDistance() {
 }
 
 int readLight() {
-  long redVal = pulseIn(sensorOut, LOW);
-  if (redVal < 0) {
-    // Handle error or out-of-range situation
-    // For now, just return a large positive value
-    return 9999; // Or any other suitable value
-  } else {
-    return redVal;
-  }
+  return (pulseIn(sensorOut, LOW));
 }
 
 int readSound() {

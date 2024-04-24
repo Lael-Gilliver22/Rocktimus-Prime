@@ -197,8 +197,9 @@ void moveTowardsLight(){
       //this means it is not going towards the light anymore!!!
     }
   }
-  else{
-    counthigh = 0;
+    else{
+      counthigh = 0;
+    }
   }
 }
 
