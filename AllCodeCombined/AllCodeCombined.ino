@@ -146,6 +146,7 @@ void soundSystem(){
   delay(2);
   if ((backSensorValue >= (leftSensorValue + soundTolerance)) && (backSensorValue >= (rightSensorValue + soundTolerance))){ // &&  is AND
     Serial.println("ROTATE 180");
+    rotate_180();
   }
   else if(rightSensorValue >= (leftSensorValue + soundTolerance)){
     Serial.println("RIGHT TURN");
@@ -170,12 +171,16 @@ void soundSystem(){
 
 void lightSystem(){
   //spinScan();
+  checkDistance();
   if (facingLight == false){
     lightScan();
   }
   else{
     //here go forwards unless there is an increase detected in red. then scan again
+    servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
+    servoRight.writeMicroseconds(1500 - servoRotateSpeed);
     checkRedIncrease();
+    checkDistance();
   }
   //LIGHT SYSTEM
 }
@@ -273,7 +278,17 @@ void turn_right() {
   delay(150);
 }
 
+void rotate_180() {
+  servoLeft.writeMicroseconds(1600);
+  servoRight.writeMicroseconds(1600);
+  delay(1500); //TEST 180 TURN SPEED
+  Serial.println("180");
+  servoLeft.writeMicroseconds(1500);
+  servoRight.writeMicroseconds(1500);
+  delay(150);
+}
 
+//spinscan is available if regular lightScan does not work.
 void spinScan(){
   lowestRed = 99999;
   countlow = 0;
@@ -412,5 +427,20 @@ void checkRedIncrease(){
     facingLight = false;
     countIncrease = 0;
   }
+}
 
+void checkDistance(){
+  int distanceReading = readDistance();
+  if (distanceReading <= stopDist){
+    stop();
+  }
+  else{
+    if (distanceReading <= slowDist){
+      servoRotateSpeed = 10;
+    }
+    else{
+      servoRotateSpeed = 30;
+    }
+    reAttach();
+  }
 }
