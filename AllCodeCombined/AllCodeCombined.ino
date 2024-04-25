@@ -27,7 +27,7 @@ VL53L0X sensor;
 const int stopDist = 45;
 const int slowDist = 80;
 int reasonableDistance = 500; //Ignores light readings when distance sensor reads higher than this. Should update to be LowestDistance + some number
-const int activateLightDistance = 500; //will switch to sound subsystem within this distance and when a large enough red light reading (activateLightLightread)
+const int activateLightDistance = 450; //will switch to sound subsystem within this distance and when a largt enough red light reading (activateLightLightread)
 int lowestDist = 99999;
 int currentDist = 0;
 //--------------------------------------
@@ -50,7 +50,7 @@ int backSensorValue = 0;
 #define S3 6
 #define sensorOut 8 //CHECK THIS IS WIRED CORRECT
 const int tolerance = 0;
-const int activateLightLightread = 4000; //Light reading must be below this and within activateLightDistance to activate the sound substem
+const int activateLightLightread = 650; //Light reading must be below this and within activateLightDistance to activate the sound substem
 int redFrequency = 0; 
 int currentRed = pulseIn(sensorOut, LOW);
 int lastRed = currentRed;
@@ -111,19 +111,23 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  Serial.println("LOOP");
   if (activeSystem == activesoundSystem){
     LEDcontrol(0, 0, 1);
+    Serial.println("RUN SOUND");
     soundSystem();
     
     //SOUND SYSTEM CODE HERE
   }
   else if (activeSystem == activelightSystem){
     LEDcontrol(0, 1, 0);
+    Serial.println("RUN light");
     lightSystem();
     //LIGHT SYSTEM CODE HERE
   }
   else{
     LEDcontrol(1, 1, 1);
+    Serial.println("RUN distance");
     //Finished, at destination, just check the distance. If the distance increases (target moved away again) reattach servos and return to sound subsystem
   }
 }
@@ -157,13 +161,14 @@ void soundSystem(){
     turn_left();
   }
   else{
-    //Serial.println("FORWARD");
+    Serial.println("FORWARD");
     servoLeft.writeMicroseconds(1600);
     servoRight.writeMicroseconds(1400);
   }
   currentRed = readLight();
   Serial.print("RED, ");
   Serial.println(currentRed);
+  Serial.println("Check activate light subsystem");
   checkActivateLightSubsystem();
 
   //SOUND SYSTEM END
@@ -171,11 +176,14 @@ void soundSystem(){
 
 void lightSystem(){
   //spinScan();
+  Serial.println("LightSystem");
   checkDistance();
   if (facingLight == false){
+    Serial.println("NOT FACING LIGHT, DO LIGHTSCAN");
     lightScan();
   }
   else{
+    Serial.println("IS FACING LIGHT, FORWARD!!");
     //here go forwards unless there is an increase detected in red. then scan again
     servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
     servoRight.writeMicroseconds(1500 - servoRotateSpeed);
@@ -186,18 +194,25 @@ void lightSystem(){
 }
 
 int readDistance() {
+  Serial.print("Reading Distance");
+  delay(20);
   int TOFdistance = (sensor.readRangeSingleMillimeters());
+  Serial.println(TOFdistance);
   if (sensor.timeoutOccurred()) {
     Serial.print(" TIMEOUT"); 
   } 
+  Serial.print("Returning distance");
   return(TOFdistance);
 }
 
 int readLight() {
+  Serial.print("Reading Light");
+  Serial.println(pulseIn(sensorOut, LOW));
   return (pulseIn(sensorOut, LOW));
 }
 
 int readSound() {
+  Serial.println("Reading Sound");
   delay(2);
   leftSensorValue = analogRead(analogLeftPin);
   //leftSensorValue = map(leftSensorValue, 0, 1023, 0, 255);
@@ -210,6 +225,7 @@ int readSound() {
 }
 
 void stop(){
+  Serial.println("AHHHHHH STOPPING");
   //detach servos or set speed to 0 or what?
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
@@ -218,25 +234,35 @@ void stop(){
 }
 
 void reAttach(){
+  Serial.println("Re-attaching Servos");
   servoLeft.attach(13);
   servoRight.attach(12);
 }
 
 void checkActivateLightSubsystem(){
+  Serial.println("checking activate light subsystem");
   int distanceReading = readDistance();
   int lightReading = readLight();
   Serial.print("distanceReading");
   Serial.print("lightReading");
   Serial.println("CHECKING ACTIVATE LIGHT SUBSYSTEM ABOVE VALUES");
-  if (distanceReading <= activateLightDistance){
+  if (1){//distanceReading <= activateLightDistance){
     if(lightReading <= activateLightLightread){
+      Serial.println("should activate light subsystem NOW");
       facingLight = false;
-      activeSystem = lightSystem;
+      activeSystem = activelightSystem;
     }
+    else{
+      Serial.println("Not enough light intensity for light subsystem");
+    }
+  }
+  else{
+    Serial.println("too far for light subsystem");
   }
 }
 
 void LEDcontrol (bool redOn, bool greenOn, bool yellowOn){ //eg to turn all on, LEDcontrol(True, True, True) or LEDcontrol(1,1,1)
+  Serial.println("LED Change");
   if (redOn){
     digitalWrite(redPin, HIGH);
   }
@@ -259,6 +285,7 @@ void LEDcontrol (bool redOn, bool greenOn, bool yellowOn){ //eg to turn all on, 
 
 
 void turn_left() {
+  Serial.println("turning left");
   servoLeft.writeMicroseconds(1400);
   servoRight.writeMicroseconds(1400);
   delay(150);
@@ -269,6 +296,7 @@ void turn_left() {
 }
 
 void turn_right() {
+  Serial.println("turning right");
   servoLeft.writeMicroseconds(1600);
   servoRight.writeMicroseconds(1600);
   delay(150);
@@ -279,6 +307,7 @@ void turn_right() {
 }
 
 void rotate_180() {
+  Serial.println("turning 180");
   servoLeft.writeMicroseconds(1600);
   servoRight.writeMicroseconds(1600);
   delay(1500); //TEST 180 TURN SPEED
@@ -290,6 +319,7 @@ void rotate_180() {
 
 //spinscan is available if regular lightScan does not work.
 void spinScan(){
+  Serial.println("doing spinscan");
   lowestRed = 99999;
   countlow = 0;
   servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
@@ -300,7 +330,7 @@ void spinScan(){
   // This will execute for 8 seconds
   digitalWrite(S2,LOW);
   digitalWrite(S3,LOW);
-  currentRed = pulseIn(sensorOut, LOW);
+  currentRed = readLight();
     //printReadings();
     if (currentRed <= lowestRed){ //CHECK IF DISTANCE SENSOR IS REASONABLE TO STOP IT DETECTING THE SUN
       if(readDistance()<reasonableDistance){
@@ -317,13 +347,16 @@ void spinScan(){
     }
   }
   Serial.println("Turning to find red light");
-  while (currentRed != lowestRed) {
+  while (currentRed >= (lowestRed)) { //Add tolerance to lowest red?
     if (readDistance()<reasonableDistance){
+      Serial.println("WITHIN REASONABLE DISTANCE TO FIND RED LIGHT");
       currentRed = readLight();
     }
   }
+  Serial.println("FOUND THE RED LIGHT, stop");
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
+  delay(150);
 }
 
 void printReadings(){
@@ -339,7 +372,9 @@ void printReadings(){
 }
 
 void lightScan(){
-  //spinScan()
+  Serial.println("running lightScan");
+  //spinScan();
+  
   currentRed = pulseIn(sensorOut, LOW);
   lastRed = currentRed;
   initialRed = currentRed;
@@ -351,7 +386,10 @@ void lightScan(){
   //turn back until reaching lowest value
   loopUntilRedIncrease("right");
   Serial.println("RIGHT DONE");
+  
   facingLight = false;
+  servoLeft.writeMicroseconds(1500 - servoRotateSpeed/1.5);
+  servoRight.writeMicroseconds(1500 - servoRotateSpeed/1.5);
   while (!facingLight) {
     currentRed = readLight();
     printReadings();
@@ -361,19 +399,21 @@ void lightScan(){
       }
     }
   }
+  
 }
 
 void loopUntilRedIncrease(String direction){
+  Serial.println("running loop until red increase");
   loopUntil = false;
   currentRed = readLight();
   initialRed = currentRed;
   if (direction == "left"){
-    servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
-    servoRight.writeMicroseconds(1500 - servoRotateSpeed);
+    servoLeft.writeMicroseconds(1500 - servoRotateSpeed/1.5);
+    servoRight.writeMicroseconds(1500 - servoRotateSpeed/1.5);
   }
   else{
-    servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
-    servoRight.writeMicroseconds(1500 + servoRotateSpeed);
+    servoLeft.writeMicroseconds(1500 + servoRotateSpeed/1.5);
+    servoRight.writeMicroseconds(1500 + servoRotateSpeed/1.5);
   }
   while (!loopUntil) {
     currentRed = readLight();
@@ -414,6 +454,7 @@ void loopUntilRedIncrease(String direction){
 }
 
 void checkRedIncrease(){
+  Serial.println("checking for red increase");
   //facingLight should already be true
   currentRed = pulseIn(sensorOut, LOW);
   if (currentRed > lastRed){
@@ -430,11 +471,14 @@ void checkRedIncrease(){
 }
 
 void checkDistance(){
+  Serial.println("checking for distance to stop");
   int distanceReading = readDistance();
   if (distanceReading <= stopDist){
+    Serial.println("EMERGENCY!!! WITHIN STOP DISTANCE");
     stop();
   }
   else{
+    Serial.println("Resume Moving Now");
     if (distanceReading <= slowDist){
       servoRotateSpeed = 10;
     }
@@ -442,5 +486,11 @@ void checkDistance(){
       servoRotateSpeed = 30;
     }
     reAttach();
+  }
+  // backup: check the light sensor
+  int lightReading = readLight();
+  int stopLight = 33;
+  if (lightReading <= stopLight){
+    //stop();
   }
 }

@@ -3,11 +3,20 @@
 Servo servoLeft;
 Servo servoRight;
 int servoRotateSpeed = 30;
+/*
 #define S0 3
 #define S1 4
 #define S2 5
 #define S3 6
 #define sensorOut 2 //CHECK THIS IS WIRED CORRECT
+*/
+//Light sensor
+#define S0 4
+#define S1 5
+#define S2 7
+#define S3 6
+#define sensorOut 8 //CHECK THIS IS WIRED CORRECT
+
 int tolerance = 0;
 int redFrequency = 0;
 int reasonableDistance = 100; //Ignores light readings when distance sensor reads higher than this
@@ -60,8 +69,8 @@ void lightScan() {
   delay (500);
   */
   spinscan();
-  servoLeft.writeMicroseconds(1500 - servoRotateSpeed/2);
-  servoRight.writeMicroseconds(1500 - servoRotateSpeed/2);
+  servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
+  servoRight.writeMicroseconds(1500 - servoRotateSpeed);
   facingLight = false;
   while (!facingLight) {
     currentRed = pulseIn(sensorOut, LOW);

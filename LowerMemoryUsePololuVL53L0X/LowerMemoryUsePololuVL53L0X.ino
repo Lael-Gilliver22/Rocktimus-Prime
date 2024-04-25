@@ -32,6 +32,7 @@ VL53L0X sensor;
 
 void setup()
 {
+  delay(50);
   Serial.begin(9600);
   Wire.begin();
 
