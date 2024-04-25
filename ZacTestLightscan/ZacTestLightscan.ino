@@ -47,7 +47,6 @@ void lightScan() {
   /*
   servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
   servoRight.writeMicroseconds(1500 - servoRotateSpeed);
-  
   loopUntilRedIncrease("left");
   Serial.println("LEFT DONE");
   //turn back until reaching lowest value

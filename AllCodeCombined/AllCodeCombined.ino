@@ -26,8 +26,8 @@ VL53L0X sensor;
 #define HIGH_ACCURACY
 const int stopDist = 45;
 const int slowDist = 80;
-int reasonableDistance = 100; //Ignores light readings when distance sensor reads higher than this. Should update to be LowestDistance + some number
-const int activateLightDistance = 100; //will switch to sound subsystem within this distance and when a large enough red light reading (activateLightLightread)
+int reasonableDistance = 500; //Ignores light readings when distance sensor reads higher than this. Should update to be LowestDistance + some number
+const int activateLightDistance = 500; //will switch to sound subsystem within this distance and when a large enough red light reading (activateLightLightread)
 int lowestDist = 99999;
 int currentDist = 0;
 //--------------------------------------
@@ -58,7 +58,9 @@ int initialRed = currentRed;
 int lowestRed = 9999;
 int countlow = 0;
 int counthigh = 0;
+int countIncrease = 0;
 bool facingLight = false;
+bool loopUntil = false;
 //--------------------------------------
 
 void setup() {
@@ -161,13 +163,20 @@ void soundSystem(){
   currentRed = readLight();
   Serial.print("RED, ");
   Serial.println(currentRed);
-  //checkActivateLightSubsystem()
+  checkActivateLightSubsystem();
 
   //SOUND SYSTEM END
 }
 
 void lightSystem(){
-  spinScan();
+  //spinScan();
+  if (facingLight == false){
+    lightScan();
+  }
+  else{
+    //here go forwards unless there is an increase detected in red. then scan again
+    checkRedIncrease();
+  }
   //LIGHT SYSTEM
 }
 
@@ -211,8 +220,12 @@ void reAttach(){
 void checkActivateLightSubsystem(){
   int distanceReading = readDistance();
   int lightReading = readLight();
+  Serial.print("distanceReading");
+  Serial.print("lightReading");
+  Serial.println("CHECKING ACTIVATE LIGHT SUBSYSTEM ABOVE VALUES");
   if (distanceReading <= activateLightDistance){
     if(lightReading <= activateLightLightread){
+      facingLight = false;
       activeSystem = lightSystem;
     }
   }
@@ -261,37 +274,143 @@ void turn_right() {
 }
 
 
-void spinscan(){
-  lowestRed = 9999;
+void spinScan(){
+  lowestRed = 99999;
   countlow = 0;
   servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
   servoRight.writeMicroseconds(1500 + servoRotateSpeed);
   unsigned long startTime = millis(); // Get the current time
 
   while (millis() - startTime < 8000) {
-
-      // This will execute for 10 seconds
+  // This will execute for 8 seconds
   digitalWrite(S2,LOW);
   digitalWrite(S3,LOW);
   currentRed = pulseIn(sensorOut, LOW);
     //printReadings();
     if (currentRed <= lowestRed){ //CHECK IF DISTANCE SENSOR IS REASONABLE TO STOP IT DETECTING THE SUN
-      if (countlow < 5){ //must be lower 3 times in a row to eliminate random jumps in value
-        countlow += 1;
-      }
-      else{
-        countlow = 0;
-        lowestRed = currentRed;
-        Serial.println("NEW LOWEST RED!!!!!");
-        printReadings();
+      if(readDistance()<reasonableDistance){
+        if (countlow < 5){ //must be lower 3 times in a row to eliminate random jumps in value
+          countlow += 1;
+        }
+        else{
+          countlow = 0;
+          lowestRed = currentRed;
+          Serial.println("NEW LOWEST RED!!!!!");
+          printReadings();
+        }
       }
     }
   }
   Serial.println("Turning to find red light");
   while (currentRed != lowestRed) {
-    currentRed = pulseIn(sensorOut, LOW);
+    if (readDistance()<reasonableDistance){
+      currentRed = readLight();
+    }
   }
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
 }
 
+void printReadings(){
+  Serial.print("currentRed");
+  Serial.print(currentRed);
+  Serial.print(" LowestRed");
+  Serial.print(lowestRed);
+  Serial.print(" countLow");
+  Serial.print(countlow);
+  Serial.print(" countHigh");
+  Serial.println(counthigh);
+  Serial.println("");
+}
+
+void lightScan(){
+  //spinScan()
+  currentRed = pulseIn(sensorOut, LOW);
+  lastRed = currentRed;
+  initialRed = currentRed;
+  lowestRed = 9999;
+  countlow = 0;
+  counthigh = 0;
+  loopUntilRedIncrease("left");
+  Serial.println("LEFT DONE");
+  //turn back until reaching lowest value
+  loopUntilRedIncrease("right");
+  Serial.println("RIGHT DONE");
+  facingLight = false;
+  while (!facingLight) {
+    currentRed = readLight();
+    printReadings();
+    if (currentRed <= lowestRed + 5){ //5 tolerance to prevent overshoots
+      if (readDistance()<reasonableDistance){
+        facingLight = true;
+      }
+    }
+  }
+}
+
+void loopUntilRedIncrease(String direction){
+  loopUntil = false;
+  currentRed = readLight();
+  initialRed = currentRed;
+  if (direction == "left"){
+    servoLeft.writeMicroseconds(1500 - servoRotateSpeed);
+    servoRight.writeMicroseconds(1500 - servoRotateSpeed);
+  }
+  else{
+    servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
+    servoRight.writeMicroseconds(1500 + servoRotateSpeed);
+  }
+  while (!loopUntil) {
+    currentRed = readLight();
+    printReadings();
+    if (currentRed <= lowestRed){
+      if (readDistance()<reasonableDistance){
+        counthigh = 0;
+        if (countlow < 5){
+          countlow += 1;
+        }
+        else{
+          countlow = 0;
+          lowestRed = currentRed;
+        }
+      }
+    }
+    else if(currentRed > lastRed){ 
+      countlow = 0;
+      if (counthigh < 5){
+        counthigh += 1;
+      }
+      else{
+        counthigh = 0;
+        if (currentRed >= lowestRed+(0.2*lowestRed)){
+          Serial.println("Final Red");
+          Serial.print(currentRed);
+          loopUntil = true;
+        }
+      }
+    }
+    if ((currentRed > (initialRed * 1.2)) && (direction == "left")){//going in wrong direction, will not find red light. Best to spin 90 degrees, or to break out the loop. NEEDS IMPROVING
+      Serial.println("Going too far away!");
+      //assume this will only happen on the first left turn, so exit the loop
+      loopUntil = true;
+    }
+    lastRed = currentRed;
+  }
+}
+
+void checkRedIncrease(){
+  //facingLight should already be true
+  currentRed = pulseIn(sensorOut, LOW);
+  if (currentRed > lastRed){
+    countIncrease += 1;
+  }
+  else{
+    countIncrease = 0;
+  }
+  if (countIncrease == 5){
+    Serial.print("Re do lightscan, drove away from light");
+    facingLight = false;
+    countIncrease = 0;
+  }
+
+}
