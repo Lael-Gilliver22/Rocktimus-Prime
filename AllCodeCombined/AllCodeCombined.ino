@@ -322,6 +322,7 @@ void spinScan(){
   Serial.println("doing spinscan");
   lowestRed = 99999;
   countlow = 0;
+  //Turning Right
   servoLeft.writeMicroseconds(1500 + servoRotateSpeed);
   servoRight.writeMicroseconds(1500 + servoRotateSpeed);
   unsigned long startTime = millis(); // Get the current time
