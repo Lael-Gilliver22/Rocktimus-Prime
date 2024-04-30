@@ -1,4 +1,4 @@
-// Last Update Before Switching to Lukes Sound Sensing Code
+//Switched to Lukes Sound Sensing Code
 //Servo
 #include <Servo.h>
 int speedMultiplier = 1; //set to 0.5 to slow to half speed when close to the end
