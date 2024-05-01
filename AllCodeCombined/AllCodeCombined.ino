@@ -25,7 +25,7 @@ const int yellowPin = 11;
 #include <VL53L0X.h>
 VL53L0X sensor;
 #define HIGH_ACCURACY
-const int stopDist = 45;
+const int stopDist = 50;
 const int slowDist = 80;
 int reasonableDistance = 500; //Ignores light readings when distance sensor reads higher than this. Should update to be LowestDistance + some number
 const int activateLightDistance = 450; //will switch to sound subsystem within this distance and when a largt enough red light reading (activateLightLightread)
