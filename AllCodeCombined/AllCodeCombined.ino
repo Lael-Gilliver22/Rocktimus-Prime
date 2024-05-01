@@ -4,7 +4,7 @@
 int speedMultiplier = 1; //set to 0.5 to slow to half speed when close to the end
 Servo servoLeft;
 Servo servoRight;
-int servoRotateSpeed = 30; 
+int servoRotateSpeed = 30;
 //--------------------------------------
 
 //Other
@@ -175,7 +175,7 @@ void loop() {
 
 
 void soundSystem(){
-  readSound();
+  //readSound();
   /*
   Serial.print(50); // To freeze the lower limit
   Serial.print(" ");
@@ -226,6 +226,7 @@ void soundSystem(){
   float backZScore = (backOutputValue - backAverageValue) / calculateStdDev(backLastValues, 25, backAverageValue);
 
   // Check if the Z-scores are greater than the threshold
+  
   if ((abs(backZScore) > threshold) && ((abs(backZScore) > abs(leftZScore)) || (abs(backZScore) > abs(rightZScore)))) {
     Serial.print("Back Sensor Outlier detected! Z-Score: ");
     Serial.println(backZScore);
@@ -233,6 +234,7 @@ void soundSystem(){
     waitAfterMove(); // Wait after turning left
     lastOutlierTime = millis(); // Update the last outlier detection time
   }
+  
   else if (abs(leftZScore) > threshold && abs(leftZScore) > abs(rightZScore)) {
     Serial.print("Left Sensor Outlier detected! Z-Score: ");
     Serial.println(leftZScore);
@@ -271,6 +273,7 @@ void lightSystem(){
   checkDistance();
   if (facingLight == false){
     Serial.println("NOT FACING LIGHT, DO LIGHTSCAN");
+    delay(1000);
     lightScan();
   }
   else{
@@ -287,11 +290,11 @@ void lightSystem(){
 int readDistance() {
   Serial.print("Reading Distance");
   delay(20);
-  int TOFdistance = (sensor.readRangeSingleMillimeters());
+  int TOFdistance = (sensor.readRangeSingleMillimeters()); //if code is sticking here, test commenting it out.
   Serial.println(TOFdistance);
   if (sensor.timeoutOccurred()) {
     Serial.print(" TIMEOUT"); 
-  }
+  } 
   Serial.print("Returning distance");
   return(TOFdistance);
 }
@@ -302,23 +305,10 @@ int readLight() {
   return (pulseIn(sensorOut, LOW));
 }
 
-int readSound() {
-  Serial.println("Reading Sound");
-  delay(2);
-  leftSensorValue = analogRead(analogLeftPin);
-  //leftSensorValue = map(leftSensorValue, 0, 1023, 0, 255);
-  delay(2);
-  rightSensorValue = analogRead(analogRightPin);
-  //rightSensorValue = map(rightSensorValue, 0, 1023, 0, 255);
-  delay(2);
-  backSensorValue = analogRead(analogBackPin);
-  //backSensorValue = map(backSensorValue, 0, 1023, 0, 255);
-}
 
 void stop(){
   Serial.println("AHHHHHH STOPPING");
   //detach servos or set speed to 0 or what?
-  activeSystem = activestopSystem;
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
   servoLeft.detach();
@@ -330,6 +320,7 @@ void reAttach(){
   Serial.println("Re-attaching Servos");
   servoLeft.attach(13);
   servoRight.attach(12);
+  delay(1000);
 }
 
 void checkActivateLightSubsystem(){
@@ -421,7 +412,6 @@ void rotate_180() {
 
 //spinscan is available if regular lightScan does not work.
 void spinScan(){
-  LEDcontrol(0, 1, 0);
   Serial.println("doing spinscan");
   lowestRed = 99999;
   countlow = 0;
@@ -569,8 +559,8 @@ void checkRedIncrease(){
   }
   if (countIncrease == 5){
     Serial.print("Re do lightscan, drove away from light");
-    //facingLight = false; //comment out if using spinscan instead, otherwise it will run the normal lightscan
-    spinScan();
+    spinScan(); //maybe reverse some first
+    //facingLight = false; // comment out if spinscan
     countIncrease = 0;
   }
 }
@@ -621,5 +611,5 @@ float calculateStdDev(int values[], int size, float mean) {
 }
 
 void waitAfterMove() {
-  delay(1500); // 5 seconds, may be unnecesary? good for testing
+  delay(1000); // 5 seconds, may be unnecesary? good for testing
 }

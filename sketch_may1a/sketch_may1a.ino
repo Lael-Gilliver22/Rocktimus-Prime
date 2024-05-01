@@ -175,7 +175,7 @@ void loop() {
 
 
 void soundSystem(){
-  readSound();
+  //readSound();
   /*
   Serial.print(50); // To freeze the lower limit
   Serial.print(" ");
@@ -226,7 +226,7 @@ void soundSystem(){
   float backZScore = (backOutputValue - backAverageValue) / calculateStdDev(backLastValues, 25, backAverageValue);
 
   // Check if the Z-scores are greater than the threshold
-  /*
+  
   if ((abs(backZScore) > threshold) && ((abs(backZScore) > abs(leftZScore)) || (abs(backZScore) > abs(rightZScore)))) {
     Serial.print("Back Sensor Outlier detected! Z-Score: ");
     Serial.println(backZScore);
@@ -234,8 +234,8 @@ void soundSystem(){
     waitAfterMove(); // Wait after turning left
     lastOutlierTime = millis(); // Update the last outlier detection time
   }
-  */
-  if (abs(leftZScore) > threshold && abs(leftZScore) > abs(rightZScore)) {
+  
+  else if (abs(leftZScore) > threshold && abs(leftZScore) > abs(rightZScore)) {
     Serial.print("Left Sensor Outlier detected! Z-Score: ");
     Serial.println(leftZScore);
     turn_left();
@@ -270,7 +270,7 @@ void soundSystem(){
 void lightSystem(){
   //spinScan();
   Serial.println("LightSystem");
-  //checkDistance();
+  checkDistance();
   if (facingLight == false){
     Serial.println("NOT FACING LIGHT, DO LIGHTSCAN");
     delay(1000);
@@ -305,18 +305,6 @@ int readLight() {
   return (pulseIn(sensorOut, LOW));
 }
 
-int readSound() {
-  Serial.println("Reading Sound");
-  delay(2);
-  leftSensorValue = analogRead(analogLeftPin);
-  //leftSensorValue = map(leftSensorValue, 0, 1023, 0, 255);
-  delay(2);
-  rightSensorValue = analogRead(analogRightPin);
-  //rightSensorValue = map(rightSensorValue, 0, 1023, 0, 255);
-  delay(2);
-  backSensorValue = analogRead(analogBackPin);
-  //backSensorValue = map(backSensorValue, 0, 1023, 0, 255);
-}
 
 void stop(){
   Serial.println("AHHHHHH STOPPING");
@@ -325,12 +313,14 @@ void stop(){
   servoRight.writeMicroseconds(1500);
   servoLeft.detach();
   servoRight.detach();
+  delay(1000);
 }
 
 void reAttach(){
   Serial.println("Re-attaching Servos");
   servoLeft.attach(13);
   servoRight.attach(12);
+  delay(1000);
 }
 
 void checkActivateLightSubsystem(){
@@ -569,7 +559,8 @@ void checkRedIncrease(){
   }
   if (countIncrease == 5){
     Serial.print("Re do lightscan, drove away from light");
-    facingLight = false;
+    spinScan(); //maybe reverse some first
+    //facingLight = false; // comment out if spinscan
     countIncrease = 0;
   }
 }
