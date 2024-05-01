@@ -25,12 +25,13 @@ const int yellowPin = 11;
 #include <VL53L0X.h>
 VL53L0X sensor;
 #define HIGH_ACCURACY
-const int stopDist = 45;
+const int stopDist = 50;
 const int slowDist = 80;
 int reasonableDistance = 500; //Ignores light readings when distance sensor reads higher than this. Should update to be LowestDistance + some number
 const int activateLightDistance = 450; //will switch to sound subsystem within this distance and when a largt enough red light reading (activateLightLightread)
 int lowestDist = 99999;
 int currentDist = 0;
+int TOFdistance = 99999;
 //--------------------------------------
 
 //Sound sensors
@@ -287,11 +288,11 @@ void lightSystem(){
 int readDistance() {
   Serial.print("Reading Distance");
   delay(20);
-  int TOFdistance = (sensor.readRangeSingleMillimeters());
+  TOFdistance = (sensor.readRangeSingleMillimeters());
   Serial.println(TOFdistance);
   if (sensor.timeoutOccurred()) {
     Serial.print(" TIMEOUT"); 
-  } 
+  }
   Serial.print("Returning distance");
   return(TOFdistance);
 }
@@ -318,6 +319,7 @@ int readSound() {
 void stop(){
   Serial.println("AHHHHHH STOPPING");
   //detach servos or set speed to 0 or what?
+  activeSystem = activestopSystem;
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
   servoLeft.detach();
@@ -419,6 +421,7 @@ void rotate_180() {
 
 //spinscan is available if regular lightScan does not work.
 void spinScan(){
+  LEDcontrol(0, 1, 0);
   Serial.println("doing spinscan");
   lowestRed = 99999;
   countlow = 0;
@@ -566,7 +569,8 @@ void checkRedIncrease(){
   }
   if (countIncrease == 5){
     Serial.print("Re do lightscan, drove away from light");
-    facingLight = false;
+    //facingLight = false; //comment out if using spinscan instead, otherwise it will run the normal lightscan
+    spinScan();
     countIncrease = 0;
   }
 }
@@ -617,5 +621,5 @@ float calculateStdDev(int values[], int size, float mean) {
 }
 
 void waitAfterMove() {
-  delay(5000); // 5 seconds, may be unnecesary? good for testing
+  delay(1500); // 5 seconds, may be unnecesary? good for testing
 }
