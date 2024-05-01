@@ -198,7 +198,7 @@ void soundSystem(){
   rightAverageValue = findAverage(rightLastValues);
   backAverageValue = findAverage(backLastValues);
 
-  /*
+  
     // Print sensor and average values
   Serial.print("Left Sensor: ");
   Serial.print(leftOutputValue);
@@ -212,7 +212,7 @@ void soundSystem(){
   Serial.print(backOutputValue);
   Serial.print(", Back Average Value: ");
   Serial.println(backAverageValue);
-  */
+  
     // Store the current outputValues in lastValues arrays
   leftLastValues[count] = leftOutputValue;
   rightLastValues[count] = rightOutputValue;
@@ -229,7 +229,7 @@ void soundSystem(){
   if ((abs(backZScore) > threshold) && ((abs(backZScore) > abs(leftZScore)) || (abs(backZScore) > abs(rightZScore)))) {
     Serial.print("Back Sensor Outlier detected! Z-Score: ");
     Serial.println(backZScore);
-    turn_left();
+    rotate_180();
     waitAfterMove(); // Wait after turning left
     lastOutlierTime = millis(); // Update the last outlier detection time
   }
